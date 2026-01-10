@@ -82,6 +82,7 @@ local function main()
     if player:GetAttribute("ExactLocation") == "Submerged Island" then
         tween(CFrame.new(11426.201171875, -2155.0634765625, 9730.7080078125))
         game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RF/SubmarineTransportation"):InvokeServer("InitiateTeleport", "Tiki Outpost")
+        task.wait(2)
     else
         tween(CFrame.new(-16516.1328125, 23.38727569580078, -189.69615173339844))
         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("BuySanguineArt")
