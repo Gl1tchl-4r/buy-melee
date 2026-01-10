@@ -24,7 +24,6 @@ local RunService = game:GetService("RunService")
 local isTweening = false
 
 player.CharacterAdded:Connect(function(newCharacter)
-    getgenv().startTween:Cancel()
     character = newCharacter
     hrp = character:WaitForChild("HumanoidRootPart")
     humanoid = character:WaitForChild("Humanoid")
@@ -85,7 +84,7 @@ local function main()
         game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RF/SubmarineTransportation"):InvokeServer("InitiateTeleport", "Tiki Outpost")
     end
 
-    if (Vector3.new(-16516.1328125, 23.38727569580078, -189.69615173339844) - hrp.Position).Magnitude >= 5 then
+    if (Vector3.new(-16516.1328125, 23.38727569580078, -189.69615173339844) - hrp.Position).Magnitude >= 1 then
         tween(CFrame.new(-16516.1328125, 23.38727569580078, -189.69615173339844))
     else
         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("BuySanguineArt")
