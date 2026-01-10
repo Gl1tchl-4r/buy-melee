@@ -1,3 +1,5 @@
+-- loadstring(game:HttpGet('https://raw.githubusercontent.com/Gl1tchl-4r/buy-melee/refs/heads/main/script.lua'))()
+
 repeat wait() until game:IsLoaded() and game.Players.LocalPlayer and game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("Main (minimal)") or game:GetService("Players").LocalPlayer.Character
 
 task.spawn(function ()
@@ -51,18 +53,16 @@ local function creatTweenPart()
     return part
 end
 
-local function tp(pos)
-    isTweening = false
-    hrp.CFrame = pos
-end
+-- local function tp(pos)
+--     isTweening = false
+--     hrp.CFrame = pos
+-- end
 
 local function tween(pos)
     local TweenPart = game.Workspace:FindFirstChild("TweenPart")
-    if not TweenPart then TweenPart = creatTweenPart()end
-    if (hrp.Position - (pos.Position or pos)).Magnitude < 60 then
-        TweenPart.CFrame = pos
-        return
-    end
+    if not TweenPart then TweenPart = creatTweenPart() end
+
+
     if TweenPart.CFrame ~= game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame then
         TweenPart.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
     end
@@ -87,7 +87,7 @@ local function main()
         tween(CFrame.new(-16516.1328125, 23.38727569580078, -189.69615173339844))
         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("BuySanguineArt")
     end
-    
+
 end
 
 spawn(function()
