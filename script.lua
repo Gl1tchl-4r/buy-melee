@@ -291,11 +291,11 @@ local function getEnemies(range)
     return targets
 end
 
-local function attack(method)
+local function attack()
     local char = player.Character
     if not char or not char:FindFirstChildOfClass("Tool") then return end
     
-    local enemies = method
+    local enemies = getEnemies(60)
     if #enemies == 0 then return end
     
     local modules = ReplicatedStorage.Modules
@@ -432,7 +432,64 @@ oldIndex = hookmetamethod(game, "__index", function(self, key)
     return oldIndex(self, key)
 end)
 
+-- add point stats
+
+local Points = game:GetService("Players").LocalPlayer.Data.Points.Value
+
+local function resetStats()
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("BlackbeardReward", "Refund", "2")
+end
+
+local function addPoint(_type, count) -- "Melee", "Defense", "Sword", "Gun"
+    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("AddPoint", "Melee", count)
+end
+
+
+local function getPlayerStats()
+    local stats = game:GetService("Players").LocalPlayer.Data.Stats
+
+    local statstable = {
+        ["Defense"] = nil,
+        ["Demon Fruit"] = nil,
+        ["Gun"] = nil,
+        ["Sword"] = nil,
+        ["Melee"] = nil
+    }
+    
+    for _, statsFolder in pairs(stats:GetChildren()) do
+        if statsFolder then
+            -- if not statstable[statsFolder.Name] then statstable[statsFolder.Name] = {} end
+            statstable[statsFolder.Name] = statsFolder.Level.Value
+        end
+    end
+    return statstable
+end
+
+local stats = getPlayerStats()
+local share = math.floor(Points / 3)
+
+local function smartAdd()
+    if share < 2500 and (stats["Defense"] <= 2500 or stats["Gun"] <= 2500 or stats["Sword"] <= 2500) then
+        resetStats()
+        task.wait(0.5)
+        Points = game:GetService("Players").LocalPlayer.Data.Points.Value
+        share = math.floor(Points / 3)
+    end
+
+    task.wait(1)
+
+    if share > 0 then
+        local targetStats = {"Defense", "Gun", "Sword"}
+        for _, statName in ipairs(targetStats) do
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("AddPoint", statName, share)
+        end
+    end
+end
+
 local function craftAndfarm()
+
+    smartAdd()
+
     local itemName;
     local craftRemot = game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("Net"):WaitForChild("RF/Craft")
     local itemList = {
@@ -461,10 +518,10 @@ local function craftAndfarm()
                         weaponsFlags["equipedSword"] = true
                     end
 
-                    repeat task.wait()
-                        equipTool("Melee")
+                    repeat task.wait(0.4)
+                        equipTool("Sword")
                         tween(CFrame.new(enemies.HumanoidRootPart.Position) * CFrame.new(0,30,0))
-                        attack(getEnemies(60))
+                        attack()
                     until not getgenv().CraftFarm or not enemies.Humanoid or enemies.Humanoid.Health <= 0 or not enemies.Parent
 
                 elseif checkItem(itemList[2]) < 500 then
