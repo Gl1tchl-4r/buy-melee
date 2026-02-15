@@ -518,7 +518,8 @@ local function craftAndfarm()
                         weaponsFlags["equipedSword"] = true
                     end
 
-                    repeat task.wait(0.4)
+                    repeat task.wait()
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
                         equipTool("Sword")
                         tween(CFrame.new(enemies.HumanoidRootPart.Position) * CFrame.new(0,30,0))
                         attack()
@@ -534,6 +535,7 @@ local function craftAndfarm()
                         tween(enemies.HumanoidRootPart.CFrame * CFrame.new(0,30,0))
                         TargetPos = enemies.HumanoidRootPart.CFrame
                         equipTool("Gun")
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
                         game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 1)
                         game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 1)
                     until not getgenv().CraftFarm or not enemies.Humanoid or enemies.Humanoid.Health <= 0 or not enemies.Parent
