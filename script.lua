@@ -276,14 +276,28 @@ local Craft_Farm_Toggle = One_click:Toggle({
     end
 })
 
+local Net = require(ReplicatedStorage.Modules.Net)
+local RegisterAttack = Net:RemoteEvent("RegisterAttack", true)
+local RegisterHit = Net:RemoteEvent("RegisterHit", true)
+
+local sessionId = tostring(player.UserId):sub(2,4) .. tostring(coroutine.running()):sub(11,15)
+
+task.spawn(function()
+    task.wait(0.3)
+    RegisterHit:FireServer(sessionId)
+end)
+
 local function getEnemies(range)
     local targets = {}
-    local pos = player.Character:GetPivot().Position
-    for _, enemy in pairs(workspace.Enemies:GetChildren()) do
-        local root = enemy:FindFirstChild("HumanoidRootPart")
-        local humanoid = enemy:FindFirstChild("Humanoid")
-        if root and humanoid and humanoid.Health > 0 then
-            if (root.Position - pos).Magnitude <= range then
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return targets end
+    
+    for _, folder in {workspace.Enemies, workspace.Characters} do
+        for _, enemy in pairs(folder:GetChildren()) do
+            if enemy == player.Character then continue end
+            local root = enemy:FindFirstChild("HumanoidRootPart")
+            local hum = enemy:FindFirstChild("Humanoid")
+            if root and hum and hum.Health > 0 and (root.Position - hrp.Position).Magnitude <= range then
                 table.insert(targets, enemy)
             end
         end
@@ -295,43 +309,41 @@ local function attack()
     local char = player.Character
     if not char or not char:FindFirstChildOfClass("Tool") then return end
     
-    local enemies = getEnemies(60)
+    local enemies = getEnemies(55)
     if #enemies == 0 then return end
     
-    local modules = ReplicatedStorage.Modules
-    local attackEvent = modules.Net["RE/RegisterAttack"]
-    local hitEvent = modules.Net["RE/RegisterHit"]
+    local hitList = {}
+    local mainPart = nil
     
-    local targets, mainTarget = {}, nil
-    local limbs = {"RightLowerArm", "RightUpperArm", "LeftLowerArm", "LeftUpperArm", "RightHand", "LeftHand"}
+    local priorityParts = {"Head", "UpperTorso", "HumanoidRootPart", "RightHand", "LeftHand"}
     
-    for _, enemy in pairs(enemies) do
-        local hitbox = enemy:FindFirstChild(limbs[math.random(#limbs)]) or enemy.PrimaryPart
-        if hitbox then
-            table.insert(targets, {enemy, hitbox})
-            mainTarget = hitbox
+    for _, enemy in ipairs(enemies) do
+        local chosen = nil
+        for _, name in ipairs(priorityParts) do
+            chosen = enemy:FindFirstChild(name)
+            if chosen then break end
+        end
+        if not chosen then chosen = enemy:FindFirstChild("HumanoidRootPart") end
+        
+        if chosen then
+            table.insert(hitList, {enemy, chosen})
+            if not mainPart then mainPart = chosen end
         end
     end
     
-    if mainTarget then
-        attackEvent:FireServer(0)
-        
-        local success, combatThread = pcall(function()
-            return require(modules.Flags).COMBAT_REMOTE_THREAD
-        end)
-        
-        local hitFunc
-        if getsenv then
-            local env = getsenv(player.PlayerScripts:FindFirstChildOfClass("LocalScript"))
-            if env then hitFunc = env._G.SendHitsToServer end
-        end
-        
-        if success and combatThread and hitFunc then
-            hitFunc(mainTarget, targets)
-        else
-            hitEvent:FireServer(mainTarget, targets)
-        end
+    if not mainPart then return end
+
+    if not char:FindFirstChild("HasBuso") then
+        ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+        task.wait(0.06)
     end
+
+    RegisterAttack:FireServer(-math.huge)
+    RegisterHit:FireServer(mainPart, hitList, nil, sessionId)
+    
+    task.delay(0.025, function()
+        RegisterHit:FireServer(true, nil, nil, sessionId)
+    end)
 end
 
 local function checkItem(_item)
@@ -495,7 +507,7 @@ local function craftAndfarm()
     local itemList = {
         { name = "Dragonheart", id = 207 },
         { name = "Dragonstorm", id = 224 },
-        -- { name = "Dual Flintlock", id = 6 },
+        -- { name = "Saber", id = 16 },
     }
 
     if not checkItem(itemList[1]) then
@@ -519,9 +531,6 @@ local function craftAndfarm()
                     end
 
                     repeat task.wait()
-                        if not player.Character:FindFirstChild("HasBuso") then
-                            ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
-                        end
                         equipTool("Sword")
                         tween(CFrame.new(enemies.HumanoidRootPart.Position) * CFrame.new(0,30,0))
                         attack()
@@ -537,9 +546,6 @@ local function craftAndfarm()
                         tween(enemies.HumanoidRootPart.CFrame * CFrame.new(0,30,0))
                         TargetPos = enemies.HumanoidRootPart.CFrame
                         equipTool("Gun")
-                        if not player.Character:FindFirstChild("HasBuso") then
-                            ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
-                        end
                         game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, true, game, 1)
                         game:GetService("VirtualInputManager"):SendMouseButtonEvent(0, 0, 0, false, game, 1)
                     until not getgenv().CraftFarm or not enemies.Humanoid or enemies.Humanoid.Health <= 0 or not enemies.Parent
